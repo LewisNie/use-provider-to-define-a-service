@@ -1,0 +1,79 @@
+<!Doctype html>
+<html ng-app="exampleApp">
+
+<head>
+    <title>use provider to define a service</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.8/angular.min.js"></script>
+    <link rel="stylesheet" href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha/css/bootstrap.min.css' />
+    <link rel="stylesheet" href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap-theme.min.css' />
+
+</head>
+
+<body ng-controller="defaultCtrl" class="panel panel-body">
+    <div class="well">
+        <div class="btn-group" tri-button counter="data.totalClicks">
+            <button class="btn btn-default" ng-repeat="city in data.cities">{{city}}</button>
+        </div>
+        <h5>Total Click: {{data.totalClicks}}</h5>
+    </div>
+    <script>
+        angular.module("exampleApp", []).config(function(logServiceProvider){//config called after all modules load.
+            logServiceProvider.debugEnabled(true).messageCounterEnabled(true);
+        })
+            .controller("defaultCtrl", function ($scope,logService ) {
+            $scope.data = {
+                cities: ["London", "New York", "Paris"],
+                totalClicks: 0
+            };
+            $scope.$watch("data.totalClicks",function(newVal){
+                logService.log("Total click count: "+newVal);
+            })
+        }).directive('triButton',function(logService){
+            return {
+                scope:{counter:"=counter"},
+                link:function(scope,elem,attrs){
+                    elem.on("click",function(event){
+                        logService.log("button click: "+ event.target.innerText);
+                        scope.$apply(function(){
+                            scope.counter++;
+                        })
+                    })
+                }
+            }
+        }).provider("logService",function(){
+            var counter=true;
+            var debug = true;
+                
+            return {
+                messageCounterEnabled : function(setting){
+                    if(angular.isDefined(setting)){
+                        counter = setting;
+                        return this;
+                    } else {
+                        return counter;
+                    }
+                },
+                debugEnabled:function(setting){
+                    if(angular.isDefined(setting)){
+                        debug = setting;
+                        return this;
+                    } else {
+                        return debug;
+                    }
+                },
+                $get: function(){
+                    return {
+                        messageCount : 0,
+                        log:function(msg){
+                            if(debug){
+                                console.log("(Log"+ (counter? "+" + this.messageCount++ + ")": ")")+msg);
+                            }
+                        }
+                    }
+                }
+            }
+        })
+    </script>
+</body>
+
+</html>
